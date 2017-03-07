@@ -48,11 +48,9 @@ router.post('/books', (req, res, next) => {
             cover_url: req.body.cover_url
         }, '*')
         .then((books) => {
-              // console.log(books);
             res.json(books[0]);
         })
         .catch((err) => {
-            // res.sendStatus(400, 'Title must not be blank');
             next(err);
         });
 });
