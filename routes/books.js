@@ -14,6 +14,7 @@ router.get('/books', (req, res, next) => {
             res.json(bookRes);
         })
         .catch((err) => {
+            res.sendStatus(404);
             next(err);
         })
 });
@@ -26,9 +27,13 @@ router.get('/books/:id', (req, res, next) => {
             if (!book) {
                 return next();
             }
+            // if (req.params.id < 0 || req.params.id >= book.id.length || isNaN(req.parms.id)) {
+            //   return res.sendStatus(404)
+            // }
             res.json(book);
         })
         .catch((err) => {
+            // res.sendStatus(404);
             next(err);
         });
 });
@@ -46,6 +51,7 @@ router.post('/books', (req, res, next) => {
             res.json(books[0]);
         })
         .catch((err) => {
+            res.sendStatus(400, 'Title must not be blank');
             next(err);
         });
 });
@@ -72,6 +78,7 @@ router.patch('/books/:id', (req, res, next) => {
           res.send(books[0]);
         })
         .catch((err) => {
+          res.sendStatus(404);
           next(err);
         });
 });
@@ -88,17 +95,17 @@ router.delete('/books/:id', (req, res, next) => {
     book = row;
     return knex('books')
     .del()
-    .where('id', req.params.id);
+    .where('id', req.params.id)
   })
   .then(() => {
     delete book.id;
     res.send(book);
   })
   .catch((err) => {
+    res.sendStatus(404);
     next(err);
   });
 });
-
 
 
 

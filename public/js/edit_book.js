@@ -12,7 +12,7 @@
     $('#author').val(book.author);
     $('#genre').val(book.genre);
     $('#description').text(book.description);
-    $('#cover').val(book.coverUrl);
+    $('#cover').val(book.cover_url);
     $('#cancel').attr('href', `/book.html?id=${book.id}`);
 
     Materialize.updateTextFields();

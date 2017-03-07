@@ -12,7 +12,7 @@
     $('#author').text(book.author);
     $('#genre').text(book.genre);
     $('#description').text(book.description);
-    $('#cover').attr({ src: book.coverUrl, alt: book.title });
+    $('#cover').attr({ src: book.cover_url, alt: book.title });
     $('#editBook').attr('href', `/edit_book.html?id=${book.id}`);
   };
 

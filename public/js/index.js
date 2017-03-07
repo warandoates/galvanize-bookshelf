@@ -19,7 +19,7 @@
         const $card = $('<div>').addClass('card');
         const $cardImage = $('<div>').addClass('card-image');
         const $col = $('<div>').addClass('col s6 m4 l3');
-        const $img = $('<img>').attr({ src: book.coverUrl, alt: book.title });
+        const $img = $('<img>').attr({ src: book.cover_url, alt: book.title });
 
         $cardImage.append($img);
         $anchor.append($cardImage);
