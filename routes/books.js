@@ -27,13 +27,9 @@ router.get('/books/:id', (req, res, next) => {
             if (!book) {
                 return next();
             }
-            // if (req.params.id < 0 || req.params.id >= book.id.length || isNaN(req.parms.id)) {
-            //   return res.sendStatus(404)
-            // }
             res.json(book);
         })
         .catch((err) => {
-            // res.sendStatus(404);
             next(err);
         });
 });
