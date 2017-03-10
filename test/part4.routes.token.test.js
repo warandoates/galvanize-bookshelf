@@ -27,7 +27,7 @@ suite('part4 routes token', () => {
         done(err);
       });
   });
-
+  
   test('GET /token without token', (done) => {
     request(server)
       .get('/token')
