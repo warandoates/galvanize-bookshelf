@@ -39,12 +39,10 @@ router.post('/token', (req, res, next) => {
       } else {
       bcrypt.compare(req.body.password, users[0].hashed_password)
           .then((res) => {
-              if (res === false) {
-                  res.set('Content-type', 'text/plain');
-                  return res.status(400).send('Bad email or password');
-              } else {
-                  return res;
-              }
+              return res;
+          }).catch((err) => {
+            res.set('Content-type', 'text/plain');
+             res.status(400).send('Bad email or password');
           })
           .then((authOk) => {
               return knex('users')
