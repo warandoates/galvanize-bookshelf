@@ -22,10 +22,10 @@ switch (app.get('env')) {
     app.use(morgan('short'));
     break;
 
-  case 'test':
-  app.use(morgan('dev'));
+  // case 'test':
+  // app.use(morgan('dev'));
   break;
-  
+
   default:
 }
 
