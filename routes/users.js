@@ -6,6 +6,9 @@ const knex = require('../knex');
 const {camelizeKeys,decamelizeKeys} = require('humps');
 // eslint-disable-next-line new-cap
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+const cert = process.env.JWT_KEY;
+
 
 // YOUR CODE HERE
 router.post('/users', (req, res, next) => {
@@ -41,6 +44,18 @@ router.post('/users', (req, res, next) => {
                 })
                 .then((users) => {
                     const user = users[0];
+                    const claims = {
+                      userId: user.id
+                    };
+                    const token = jwt.sign(claims, cert, {
+                      expiresIn: '7 days'
+                    });
+                    res.cookie('token', token, {
+                        path: '/',
+                        httpOnly: true,
+                        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                        secure: router.get('env') === 'development'
+                    });
                     delete user.hashed_password;
                     res.send(camelizeKeys(user));
                 })
