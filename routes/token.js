@@ -31,10 +31,14 @@ router.get('/token', ( req, res, next) => {
 
 router.post('/token', (req, res, next) => {
   return knex('users')
+    .where('email', req.body.email)
     .then((users) => {
+      if(!users[0]) {
+        res.set('Content-Type', 'text/plain');
+        res.status(400).send('Bad email or password');
+      } else {
       bcrypt.compare(req.body.password, users[0].hashed_password)
           .then((res) => {
-              console.log(res);
               if (res === false) {
                   res.set('Content-type', 'text/plain');
                   return res.status(400).send('Bad email or password');
@@ -46,26 +50,34 @@ router.post('/token', (req, res, next) => {
               return knex('users')
                   .where('email', req.body.email)
                   .then((authUser) => {
-                      delete users[0].hashed_password;
-                      let claims = {
-                          userId: authUser[0].id
-                      };
-                      const token = jwt.sign(claims, cert, {
-                          expiresIn: '7 days'
-                      });
-                      res.cookie('token', token, {
-                          path: '/',
-                          httpOnly: true,
-                          expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-                          secure: router.get('env') === 'development'
-                      });
-                      res.send(camelizeKeys(users[0]));
+                    delete users[0].hashed_password;
+                    let claims = {
+                        userId: authUser[0].id
+                    };
+                    const token = jwt.sign(claims, cert, {
+                        expiresIn: '7 days'
+                    });
+                    res.cookie('token', token, {
+                        path: '/',
+                        httpOnly: true,
+                        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                        secure: router.get('env') === 'development'
+                    });
+                    res.send(camelizeKeys(users[0]));
                   })
                   .catch((err) => {
                       next(err)
                   });
           });
+        }
     });
+});
+
+router.delete('/token', (req, res, next) => {
+
+  res.clearCookie('token',{ path: '/' });
+  res.set('Content-type', 'text/plain');
+  res.status(200).send(true);
 });
 
 
