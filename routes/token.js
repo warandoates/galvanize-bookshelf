@@ -30,6 +30,15 @@ router.get('/token', ( req, res, next) => {
 })
 
 router.post('/token', (req, res, next) => {
+  if (!req.body.email) {
+    res.set('Content-Type', 'text/plain');
+    res.status(400).send('Email must not be blank');
+  }
+
+  if(!req.body.password) {
+    res.set('Content-Type', 'text/plain');
+    res.status(400).send('Password must not be blank')
+  }
   return knex('users')
     .where('email', req.body.email)
     .then((users) => {
@@ -62,17 +71,15 @@ router.post('/token', (req, res, next) => {
                         secure: router.get('env') === 'development'
                     });
                     res.send(camelizeKeys(users[0]));
-                  })
-                  .catch((err) => {
-                      next(err)
                   });
           });
         }
-    });
+    }).catch((err) => {
+      next(err);
+    })
 });
 
 router.delete('/token', (req, res, next) => {
-
   res.clearCookie('token',{ path: '/' });
   res.set('Content-type', 'text/plain');
   res.status(200).send(true);
