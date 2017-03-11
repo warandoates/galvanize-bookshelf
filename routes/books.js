@@ -16,7 +16,7 @@ router.get('/books', (req, res, next) => {
         .catch((err) => {
             res.sendStatus(404);
             next(err);
-        })
+        });
 });
 
 router.get('/books/:id', (req, res, next) => {
