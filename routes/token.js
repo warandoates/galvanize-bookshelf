@@ -15,7 +15,6 @@ const cert = process.env.JWT_KEY;
 
 
 router.get('/token', (req, res, next) => {
-
     if (req.cookies.token === undefined) {
         res.set('Content-type', 'application/json');
         res.status(200).send('false');
@@ -54,7 +53,7 @@ router.post('/token', (req, res, next) => {
                         .where('email', req.body.email)
                         .then((authUser) => {
                             delete users[0].hashed_password;
-                            let claims = { userId: authUser[0].id };
+                            let claims = { userId: users[0].id };
                             const token = jwt.sign(claims, cert, {expiresIn: '7 days'});
                             res.cookie('token', token, {
                                 path: '/',
