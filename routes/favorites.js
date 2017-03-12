@@ -16,28 +16,35 @@ const jwt = require('jsonwebtoken');
 const cert = process.env.JWT_KEY;
 
 router.get('/favorites', (req, res, next) => {
-    if (!req.cookies.token) {
-        res.set('Content-type', 'plain/text');
-        res.status(401).send('Unauthorized');
-    }
-    knex('favorites')
-        .join('books', 'favorites.book_id', '=', 'books.id')
-        .select('*', '*')
-        .then((booksRes) => {
-            res.status(200).send(camelizeKeys(booksRes));
-        })
-        .catch((err) => {
-            res.sendStatus(404);
-            next(err);
-        });
+    jwt.verify(req.cookies.token, cert, (err, payload) => {
+        if (err) {
+            res.set('Content-type', 'text/plain');
+            res.status(401).send('Unauthorized');
+        } else {
+            knex('favorites')
+                .join('books', 'favorites.book_id', '=', 'books.id')
+                .select('*', '*')
+                .then((booksRes) => {
+                    res.status(200).send(camelizeKeys(booksRes));
+                })
+                .catch((err) => {
+                    res.set('Content-type', 'text/plain');
+                    res.sendStatus(404);
+                    next(err);
+                });
+        }
+    });
 });
-
 router.get('/favorites/:check', (req, res, next) => {
-    if (!req.cookies.token) {
-        res.set('Content-type', 'plain/text');
-        res.status(401).send('Unauthorized');
-    }
-
+    // if (!req.cookies.token) {
+    //     res.set('Content-type', 'plain/text');
+    //     res.status(401).send('Unauthorized');
+    // }
+    jwt.verify(req.cookies.token, cert, (err, payload) => {
+        if (err) {
+            res.set('Content-type', 'text/plain');
+            res.status(401).send('Unauthorized');
+        } else {
     knex('favorites')
         .join('books', 'favorites.book_id', '=', 'books.id')
         .select('*', '*')
@@ -54,16 +61,16 @@ router.get('/favorites/:check', (req, res, next) => {
             }
         })
         .catch((err) => {
+          res.set('Content-type', 'text/plain')
+
             res.sendStatus(404);
             next(err);
         });
+      }
+});
 });
 
 router.post('/favorites', (req, res, next) => {
-    // if(!req.cookies.token) {
-    //   res.set('Content-type', 'plain/text');
-    //   res.status(401).send('Unauthorized');
-    // }
     let requesterBookId = req.body.bookId;
     jwt.verify(req.cookies.token, cert, (err, payload) => {
         if (err) {
@@ -71,19 +78,19 @@ router.post('/favorites', (req, res, next) => {
             res.status(401).send('Unauthorized');
         } else {
 
-        let cookieUserId = payload.userId;
-        knex('favorites')
-            .insert({
-                book_id: requesterBookId,
-                user_id: cookieUserId
-            }, '*')
-            .then((favoritesNewEntry) => {
-                res.status(200).send(camelizeKeys(favoritesNewEntry[0]));
-            })
-            .catch((err) => {
-                next(err);
-            });
-          }
+            let cookieUserId = payload.userId;
+            knex('favorites')
+                .insert({
+                    book_id: requesterBookId,
+                    user_id: cookieUserId
+                }, '*')
+                .then((favoritesNewEntry) => {
+                    res.status(200).send(camelizeKeys(favoritesNewEntry[0]));
+                })
+                .catch((err) => {
+                    next(err);
+                });
+        }
     });
 });
 
@@ -94,41 +101,33 @@ router.delete('/favorites', (req, res, next) => {
     // }
     let reqBookId = req.body.bookId;
     jwt.verify(req.cookies.token, cert, (err, payload) => {
-      if(err) {
-        res.set('Content-type', 'plain/text');
-        res.status(401).send('Unauthorized');
-      } else {
+        if (err) {
+            res.set('Content-type', 'plain/text');
+            res.status(401).send('Unauthorized');
+        } else {
 
-      let cookieUserId = payload.userId;
-      let fav;
-      knex('favorites')
-      .where('book_id', reqBookId)
-      .first()
-      .then((row) => {
-        fav = row;
-        return knex('favorites')
-        .del()
-        .where('id', cookieUserId)
-      })
-      .then(() => {
-        delete fav.id;
-        // console.log(fav);
-        res.send(camelizeKeys(fav));
-      })
-      .catch((err) => {
-        rese.sendStatus(404);
-        next(err);
-      });
-    }
+            let cookieUserId = payload.userId;
+            let fav;
+            knex('favorites')
+                .where('book_id', reqBookId)
+                .first()
+                .then((row) => {
+                    fav = row;
+                    return knex('favorites')
+                        .del()
+                        .where('id', cookieUserId)
+                })
+                .then(() => {
+                    delete fav.id;
+                    // console.log(fav);
+                    res.send(camelizeKeys(fav));
+                });
+            // .catch((err) => {
+            //   rese.sendStatus(404);
+            //   next(err);
+            // });
+        }
     });
 });
-
-
-
-
-
-
-
-
 
 module.exports = router;
