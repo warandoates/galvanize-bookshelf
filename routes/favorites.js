@@ -4,60 +4,131 @@ const express = require('express');
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
-const { camelizeKeys, decamelizeKeys } = require('humps');
+const {
+    camelizeKeys,
+    decamelizeKeys
+} = require('humps');
 
 // YOUR CODE HERE
 const knex = require('../knex');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+const cert = process.env.JWT_KEY;
 
 router.get('/favorites', (req, res, next) => {
-  if(!req.cookies.token) {
-    res.set('Content-type', 'plain/text');
-    res.status(401).send('Unauthorized');
-  }
-  knex('favorites')
-  .join('books', 'favorites.book_id', '=', 'books.id')
-  .select('*', '*')
-  .then((booksRes) => {
-      // console.log(booksRes);
-      res.status(200).send(camelizeKeys(booksRes));
-    // })
-  })
-    .catch((err) => {
-      res.sendStatus(404);
-      next(err);
-    });
+    if (!req.cookies.token) {
+        res.set('Content-type', 'plain/text');
+        res.status(401).send('Unauthorized');
+    }
+    knex('favorites')
+        .join('books', 'favorites.book_id', '=', 'books.id')
+        .select('*', '*')
+        .then((booksRes) => {
+            res.status(200).send(camelizeKeys(booksRes));
+        })
+        .catch((err) => {
+            res.sendStatus(404);
+            next(err);
+        });
 });
 
 router.get('/favorites/:check', (req, res, next) => {
-  if(!req.cookies.token) {
-    res.set('Content-type', 'plain/text');
-    res.status(401).send('Unauthorized');
-  }
+    if (!req.cookies.token) {
+        res.set('Content-type', 'plain/text');
+        res.status(401).send('Unauthorized');
+    }
 
-  knex('favorites')
-  .join('books', 'favorites.book_id', '=', 'books.id')
-  .select('*', '*')
-  .then((booksRes) => {
-      let favBooksId = JSON.stringify(booksRes[0].book_id);
-      let searchQuery = req.query.bookId;
-      console.log('this is table', favBooksId);
-      console.log('this is query', searchQuery);
-      // console.log('this is from userstable', favBooksId);
-      // console.log('this is req.query', req.query.bookId.toString());
-      console.log(searchQuery === favBooksId);
-      if (searchQuery == favBooksId) {
-        res.set('Content-Type', 'application/json');
-        res.status(200).send('true');
-      } else {
-        res.set('Content-Type', 'application/json');
-        res.status(200).send('false');
-      }
-  })
-    .catch((err) => {
-      res.sendStatus(404);
-      next(err);
+    knex('favorites')
+        .join('books', 'favorites.book_id', '=', 'books.id')
+        .select('*', '*')
+        .then((booksRes) => {
+            let favBooksId = JSON.stringify(booksRes[0].book_id);
+            let searchQuery = req.query.bookId;
+
+            if (searchQuery == favBooksId) {
+                res.set('Content-Type', 'application/json');
+                res.status(200).send('true');
+            } else {
+                res.set('Content-Type', 'application/json');
+                res.status(200).send('false');
+            }
+        })
+        .catch((err) => {
+            res.sendStatus(404);
+            next(err);
+        });
+});
+
+router.post('/favorites', (req, res, next) => {
+    // if(!req.cookies.token) {
+    //   res.set('Content-type', 'plain/text');
+    //   res.status(401).send('Unauthorized');
+    // }
+    let requesterBookId = req.body.bookId;
+    jwt.verify(req.cookies.token, cert, (err, payload) => {
+        if (err) {
+            res.set('Content-type', 'plain/text');
+            res.status(401).send('Unauthorized');
+        } else {
+
+        let cookieUserId = payload.userId;
+        knex('favorites')
+            .insert({
+                book_id: requesterBookId,
+                user_id: cookieUserId
+            }, '*')
+            .then((favoritesNewEntry) => {
+                res.status(200).send(camelizeKeys(favoritesNewEntry[0]));
+            })
+            .catch((err) => {
+                next(err);
+            });
+          }
     });
 });
-// })
+
+router.delete('/favorites', (req, res, next) => {
+    // if (!req.cookies.token) {
+    //     res.set('Content-type', 'plain/text');
+    //     res.status(401).send('Unauthorized');
+    // }
+    let reqBookId = req.body.bookId;
+    jwt.verify(req.cookies.token, cert, (err, payload) => {
+      if(err) {
+        res.set('Content-type', 'plain/text');
+        res.status(401).send('Unauthorized');
+      } else {
+
+      let cookieUserId = payload.userId;
+      let fav;
+      knex('favorites')
+      .where('book_id', reqBookId)
+      .first()
+      .then((row) => {
+        fav = row;
+        return knex('favorites')
+        .del()
+        .where('id', cookieUserId)
+      })
+      .then(() => {
+        delete fav.id;
+        // console.log(fav);
+        res.send(camelizeKeys(fav));
+      })
+      .catch((err) => {
+        rese.sendStatus(404);
+        next(err);
+      });
+    }
+    });
+});
+
+
+
+
+
+
+
+
 
 module.exports = router;
