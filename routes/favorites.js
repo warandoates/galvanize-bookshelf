@@ -34,7 +34,9 @@ router.get('/favorites', (req, res, next) => {
 });
 
 router.get('/favorites/:check', (req, res, next) => {
-  if(isNaN(req.query)) {
+  let searchQuery = req.query.bookId;
+
+  if(isNaN(searchQuery)) {
     res.set('Content-Type', 'text/plain');
     res.status(400).send('Book ID must be an integer');
   } else {
@@ -49,7 +51,6 @@ router.get('/favorites/:check', (req, res, next) => {
                 .select('*', '*')
                 .then((booksRes) => {
                     let favBooksId = JSON.stringify(booksRes[0].book_id);
-                    let searchQuery = req.query.bookId;
 
                     if (searchQuery == favBooksId) {
                         res.set('Content-Type', 'application/json');
@@ -71,6 +72,10 @@ router.get('/favorites/:check', (req, res, next) => {
 });
 
 router.post('/favorites', (req, res, next) => {
+  // if(isNaN(req.body)) {
+  //   res.set('Content-Type', 'text/plain');
+  //   res.status(400).send('Book ID must be an integer');
+  // }
     const reqBookId = req.body.bookId;
     jwt.verify(req.cookies.token, cert, (err, payload) => {
         if (err) {
