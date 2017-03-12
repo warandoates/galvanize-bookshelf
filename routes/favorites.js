@@ -4,10 +4,7 @@ const express = require('express');
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
-const {
-    camelizeKeys,
-    decamelizeKeys
-} = require('humps');
+const { camelizeKeys, decamelizeKeys } = require('humps');
 
 // YOUR CODE HERE
 const knex = require('../knex');
@@ -35,53 +32,56 @@ router.get('/favorites', (req, res, next) => {
         }
     });
 });
+
 router.get('/favorites/:check', (req, res, next) => {
-    // if (!req.cookies.token) {
-    //     res.set('Content-type', 'plain/text');
-    //     res.status(401).send('Unauthorized');
-    // }
+  if(isNaN(req.query)) {
+    res.set('Content-Type', 'text/plain');
+    res.status(400).send('Book ID must be an integer');
+  } else {
+
     jwt.verify(req.cookies.token, cert, (err, payload) => {
         if (err) {
             res.set('Content-type', 'text/plain');
             res.status(401).send('Unauthorized');
         } else {
-    knex('favorites')
-        .join('books', 'favorites.book_id', '=', 'books.id')
-        .select('*', '*')
-        .then((booksRes) => {
-            let favBooksId = JSON.stringify(booksRes[0].book_id);
-            let searchQuery = req.query.bookId;
+            knex('favorites')
+                .join('books', 'favorites.book_id', '=', 'books.id')
+                .select('*', '*')
+                .then((booksRes) => {
+                    let favBooksId = JSON.stringify(booksRes[0].book_id);
+                    let searchQuery = req.query.bookId;
 
-            if (searchQuery == favBooksId) {
-                res.set('Content-Type', 'application/json');
-                res.status(200).send('true');
-            } else {
-                res.set('Content-Type', 'application/json');
-                res.status(200).send('false');
-            }
-        })
-        .catch((err) => {
-          res.set('Content-type', 'text/plain')
+                    if (searchQuery == favBooksId) {
+                        res.set('Content-Type', 'application/json');
+                        res.status(200).send('true');
+                    } else {
+                        res.set('Content-Type', 'application/json');
+                        res.status(200).send('false');
+                    }
+                })
+                .catch((err) => {
+                    res.set('Content-type', 'text/plain')
 
-            res.sendStatus(404);
-            next(err);
-        });
-      }
-});
+                    res.sendStatus(404);
+                    next(err);
+                });
+        }
+    });
+  }
 });
 
 router.post('/favorites', (req, res, next) => {
-    let requesterBookId = req.body.bookId;
+    const reqBookId = req.body.bookId;
     jwt.verify(req.cookies.token, cert, (err, payload) => {
         if (err) {
             res.set('Content-type', 'plain/text');
             res.status(401).send('Unauthorized');
         } else {
 
-            let cookieUserId = payload.userId;
+            const cookieUserId = payload.userId;
             knex('favorites')
                 .insert({
-                    book_id: requesterBookId,
+                    book_id: reqBookId,
                     user_id: cookieUserId
                 }, '*')
                 .then((favoritesNewEntry) => {
@@ -95,18 +95,13 @@ router.post('/favorites', (req, res, next) => {
 });
 
 router.delete('/favorites', (req, res, next) => {
-    // if (!req.cookies.token) {
-    //     res.set('Content-type', 'plain/text');
-    //     res.status(401).send('Unauthorized');
-    // }
-    let reqBookId = req.body.bookId;
+    const reqBookId = req.body.bookId;
     jwt.verify(req.cookies.token, cert, (err, payload) => {
         if (err) {
             res.set('Content-type', 'plain/text');
             res.status(401).send('Unauthorized');
         } else {
-
-            let cookieUserId = payload.userId;
+            const cookieUserId = payload.userId;
             let fav;
             knex('favorites')
                 .where('book_id', reqBookId)
@@ -119,13 +114,8 @@ router.delete('/favorites', (req, res, next) => {
                 })
                 .then(() => {
                     delete fav.id;
-                    // console.log(fav);
                     res.send(camelizeKeys(fav));
                 });
-            // .catch((err) => {
-            //   rese.sendStatus(404);
-            //   next(err);
-            // });
         }
     });
 });
