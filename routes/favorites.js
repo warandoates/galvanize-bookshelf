@@ -74,7 +74,8 @@ router.post('/favorites', tokenAuth, (req, res, next) => {
     if (isNaN(reqBookId)) {
         res.set('Content-Type', 'text/plain');
         res.status(400).send('Book ID must be an integer');
-    }
+    } else {
+
     knex('books')
         .where('id', reqBookId)
         .first()
@@ -96,6 +97,7 @@ router.post('/favorites', tokenAuth, (req, res, next) => {
                     });
             }
         });
+      }
 });
 
 router.delete('/favorites', tokenAuth, (req, res, next) => {
