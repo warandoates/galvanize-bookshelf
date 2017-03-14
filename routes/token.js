@@ -2,7 +2,10 @@
 
 const express = require('express');
 const bcrypt = require('bcrypt-as-promised');
-const { camelizeKeys, decamelizeKeys } = require('humps');
+const {
+    camelizeKeys,
+    decamelizeKeys
+} = require('humps');
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
@@ -27,45 +30,50 @@ router.get('/token', (req, res, next) => {
 router.post('/token', (req, res, next) => {
     if (!req.body.email) {
         res.set('Content-Type', 'text/plain');
-        res.status(400).send('Email must not be blank');
+        return res.status(400).send('Email must not be blank');
     }
 
     if (!req.body.password) {
         res.set('Content-Type', 'text/plain');
-        res.status(400).send('Password must not be blank')
+        return res.status(400).send('Password must not be blank')
     }
     return knex('users')
         .where('email', req.body.email)
         .then((users) => {
-            if (!users[0]) {
-                res.set('Content-Type', 'text/plain');
-                res.status(400).send('Bad email or password');
+            return bcrypt.compare(req.body.password, users[0].hashed_password)
+        })
+        .catch((err) => {
+            res.set('Content-type', 'text/plain');
+            return res.status(400).send('Bad email or password');
+            next(err);
+        })
+        .then(() => {
+            return knex('users')
+                .where('email', req.body.email)
+        })
+        .then((authUser) => {
+            if (!authUser[0]) {
+                res.set('Content-type', 'text/plain')
+                return res.status(400).send('Bad email or password')
             } else {
-                bcrypt.compare(req.body.password, users[0].hashed_password)
-                    .then((res) => {
-                        return res;
-                    }).catch((err) => {
-                        res.set('Content-type', 'text/plain');
-                        res.status(400).send('Bad email or password');
-                    })
-                    .then((authOk) => {
-                        return knex('users')
-                        .where('email', req.body.email)
-                        .then((authUser) => {
-                            delete users[0].hashed_password;
-                            let claims = { userId: users[0].id };
-                            const token = jwt.sign(claims, cert, {expiresIn: '7 days'});
-                            res.cookie('token', token, {
-                                path: '/',
-                                httpOnly: true,
-                                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-                                secure: router.get('env') === 'development'
-                            });
-                            res.send(camelizeKeys(users[0]));
-                        });
-                    });
+
+                delete authUser[0].hashed_password;
+                let claims = {
+                    userId: authUser[0].id
+                };
+                const token = jwt.sign(claims, cert, {
+                    expiresIn: '7 days'
+                });
+                res.cookie('token', token, {
+                    path: '/',
+                    httpOnly: true,
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    secure: router.get('env') === 'development'
+                });
+                return res.json(camelizeKeys(authUser[0]));
             }
         })
+        // })
         .catch((err) => {
             next(err);
         });
@@ -76,7 +84,7 @@ router.delete('/token', (req, res, next) => {
         path: '/'
     });
     res.set('Content-type', 'text/plain');
-    res.status(200).send(true);
+    return res.status(200).send(true);
 });
 
 
