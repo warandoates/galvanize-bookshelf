@@ -61,14 +61,16 @@ app.use((_req, res) => {
 
 // eslint-disable-next-line max-params
 app.use((err, _req, res, _next) => {
-  if (err instanceof ev.ValidationError) {
-      res.set('Content-Type', 'text/plain')
-      res.status(err.status).send(err);
-  }
+ if (err.status) {
+   return res
+     .status(err.status)
+     .set('Content-Type', 'text/plain')
+     .send(err);
+ }
 
-  // eslint-disable-next-line no-console
-  console.error(err.stack);
-  res.sendStatus(500);
+ // eslint-disable-next-line no-console
+ console.error(err.stack);
+ res.sendStatus(500);
 });
 const port = process.env.PORT || 8000;
 
