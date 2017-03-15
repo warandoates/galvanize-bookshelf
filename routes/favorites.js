@@ -14,6 +14,8 @@ const knex = require('../knex');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const cert = process.env.JWT_KEY;
+const ev = require('express-validation');
+const validations = require('../validations/favorites');
 
 function tokenAuth(req, res, next) {
     jwt.verify(req.cookies.token, cert, (err, payload) => {
@@ -39,28 +41,27 @@ router.route('/favorites')
                 next(err);
             });
     })
-    .post(tokenAuth, (req, res, next) => {
+    .post(tokenAuth, ev(validations.post), (req, res, next) => {
         const reqBookId = req.body.bookId;
         const cookieUserId = req.token.userId;
-        if (isNaN(reqBookId)) {
-            res.set('Content-Type', 'text/plain');
-            res.status(400).send('Book ID must be an integer');
-        } else {
-
+        // if (isNaN(reqBookId)) {
+        //     res.set('Content-Type', 'text/plain');
+        //     res.status(400).send('Book ID must be an integer');
+        // } else {
             knex('books')
                 .where('id', reqBookId)
                 .first()
                 .then((row) => {
-                    if (!row) {
-                        res.set('Content-Type', 'text/plain');
-                        res.status(404).send('Book not found');
-                    } else {
+                    // if (!row) {
+                    //     res.set('Content-Type', 'text/plain');
+                    //     res.status(404).send('Book not found');
+                    // } else {
                         return knex('favorites')
                             .insert({
                                 book_id: reqBookId,
                                 user_id: cookieUserId
                             }, '*')
-                    }
+                    // }
                 })
                 .then((favoritesNewEntry) => {
                     res.status(200).send(camelizeKeys(favoritesNewEntry[0]));
@@ -68,7 +69,7 @@ router.route('/favorites')
                 .catch((err) => {
                     next(err);
                 });
-        }
+        // }
     })
     .delete(tokenAuth, (req, res, next) => {
         const reqBookId = req.body.bookId;

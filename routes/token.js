@@ -15,6 +15,9 @@ const knex = require('../knex.js')
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const cert = process.env.JWT_KEY;
+const ev = require('express-validation');
+const validations = require('../validations/token');
+
 
 
 router.get('/token', (req, res, next) => {
@@ -27,16 +30,16 @@ router.get('/token', (req, res, next) => {
     }
 });
 
-router.post('/token', (req, res, next) => {
-    if (!req.body.email) {
-        res.set('Content-Type', 'text/plain');
-        return res.status(400).send('Email must not be blank');
-    }
-
-    if (!req.body.password) {
-        res.set('Content-Type', 'text/plain');
-        return res.status(400).send('Password must not be blank')
-    }
+router.post('/token', ev(validations.post), (req, res, next) => {
+    // if (!req.body.email) {
+    //     res.set('Content-Type', 'text/plain');
+    //     return res.status(400).send('Email must not be blank');
+    // }
+    //
+    // if (!req.body.password) {
+    //     res.set('Content-Type', 'text/plain');
+    //     return res.status(400).send('Password must not be blank')
+    // }
     return knex('users')
         .where('email', req.body.email)
         .then((users) => {
